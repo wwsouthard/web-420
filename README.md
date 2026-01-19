@@ -1,2 +1,4 @@
-# web-420
-RESTFul APIs 
+# WEB 420 RESTFul APIs 
+## Contributors
+- Richard Krasso
+- Will Southard
