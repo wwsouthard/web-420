@@ -11,6 +11,7 @@
 
 const express = require('express');
 const createError = require('http-errors');
+const books = require('../database/books');
 const app = express();
 
 /**
@@ -89,6 +90,41 @@ app.get('/', (req, res) => {
 </body>
 </html>
   `);
+});
+
+/**
+ * GET /api/books
+ * Returns an array of books from the mock database.
+ */
+app.get('/api/books', async (req, res, next) => {
+  try {
+    const bookList = await books.find();
+    res.json(bookList);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/books/:id
+ * Returns a single book with the matching id from the mock database.
+ */
+app.get('/api/books/:id', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      next(createError(400, 'Id must be a number'));
+      return;
+    }
+    const book = await books.findOne({ id });
+    res.json(book);
+  } catch (err) {
+    if (err.message === 'No matching item found') {
+      next(createError(404, 'Book not found'));
+      return;
+    }
+    next(err);
+  }
 });
 
 /**
