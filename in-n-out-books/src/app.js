@@ -155,6 +155,34 @@ app.post('/api/books', async (req, res, next) => {
 });
 
 /**
+ * PUT /api/books/:id
+ * Updates a book with the matching id in the mock database. Returns 204.
+ * Requires title in the request body; returns 400 if title is missing or id is not a number.
+ */
+app.put('/api/books/:id', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      next(createError(400, 'Input must be a number'));
+      return;
+    }
+    const { title, author } = req.body || {};
+    if (!title || (typeof title === 'string' && title.trim() === '')) {
+      next(createError(400, 'Bad Request'));
+      return;
+    }
+    await books.updateOne({ id }, { title: title.trim(), author: author ?? '' });
+    res.status(204).send();
+  } catch (err) {
+    if (err.message === 'No matching item found') {
+      next(createError(404, 'Book not found'));
+      return;
+    }
+    next(err);
+  }
+});
+
+/**
  * DELETE /api/books/:id
  * Deletes a book with the matching id from the mock database. Returns 204.
  */

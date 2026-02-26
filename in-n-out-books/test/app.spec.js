@@ -70,3 +70,31 @@ describe('Chapter 4: API Tests', () => {
     expect(res.status).toBe(204);
   });
 });
+
+describe('Chapter 5: API Tests', () => {
+  it('should update a book and return a 204-status code', async () => {
+    const res = await request(app)
+      .put('/api/books/1')
+      .send({ title: 'Updated Title', author: 'Updated Author' })
+      .set('Accept', 'application/json');
+    expect(res.status).toEqual(204);
+  });
+
+  it('should return a 400-status code when using a non-numeric id', async () => {
+    const res = await request(app)
+      .put('/api/books/foo')
+      .send({ title: 'Title', author: 'Author' })
+      .set('Accept', 'application/json');
+    expect(res.status).toEqual(400);
+    expect(res.body.error).toEqual('Input must be a number');
+  });
+
+  it('should return a 400-status code when updating a book with a missing title', async () => {
+    const res = await request(app)
+      .put('/api/books/1')
+      .send({ author: 'Author Only' })
+      .set('Accept', 'application/json');
+    expect(res.status).toEqual(400);
+    expect(res.body.error).toEqual('Bad Request');
+  });
+});
