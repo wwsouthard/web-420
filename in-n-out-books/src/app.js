@@ -14,6 +14,8 @@ const createError = require('http-errors');
 const books = require('../database/books');
 const app = express();
 
+app.use(express.json());
+
 /**
  * GET /
  * Landing page for the In-N-Out-Books application.
@@ -118,6 +120,53 @@ app.get('/api/books/:id', async (req, res, next) => {
     }
     const book = await books.findOne({ id });
     res.json(book);
+  } catch (err) {
+    if (err.message === 'No matching item found') {
+      next(createError(404, 'Book not found'));
+      return;
+    }
+    next(err);
+  }
+});
+
+/**
+ * POST /api/books
+ * Adds a new book to the mock database. Returns 201 with the created book.
+ * Requires title in the request body; returns 400 if title is missing.
+ */
+app.post('/api/books', async (req, res, next) => {
+  try {
+    const { title, author } = req.body || {};
+    if (!title || (typeof title === 'string' && title.trim() === '')) {
+      throw createError(400, 'Title is required');
+    }
+    const bookList = await books.find();
+    const maxId = bookList.length ? Math.max(...bookList.map((b) => b.id)) : 0;
+    const newBook = { id: maxId + 1, title: title.trim(), author: author || '' };
+    await books.insertOne(newBook);
+    res.status(201).json(newBook);
+  } catch (err) {
+    if (err.status) {
+      next(err);
+      return;
+    }
+    next(err);
+  }
+});
+
+/**
+ * DELETE /api/books/:id
+ * Deletes a book with the matching id from the mock database. Returns 204.
+ */
+app.delete('/api/books/:id', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      next(createError(400, 'Id must be a number'));
+      return;
+    }
+    await books.deleteOne({ id });
+    res.status(204).send();
   } catch (err) {
     if (err.message === 'No matching item found') {
       next(createError(404, 'Book not found'));

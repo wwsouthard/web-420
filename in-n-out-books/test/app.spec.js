@@ -40,3 +40,33 @@ describe('Chapter 3: API Tests', () => {
     });
   });
 });
+
+describe('Chapter 4: API Tests', () => {
+  it('should return a 201-status code when adding a new book', async () => {
+    const newBook = { title: 'Test Book', author: 'Test Author' };
+    const res = await request(app)
+      .post('/api/books')
+      .send(newBook)
+      .set('Accept', 'application/json');
+    expect(res.status).toBe(201);
+  });
+
+  it('should return a 400-status code when adding a new book with missing title', async () => {
+    const res = await request(app)
+      .post('/api/books')
+      .send({ author: 'Test Author' })
+      .set('Accept', 'application/json');
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('should return a 204-status code when deleting a book', async () => {
+    const createRes = await request(app)
+      .post('/api/books')
+      .send({ title: 'Book to Delete', author: 'Author' })
+      .set('Accept', 'application/json');
+    const id = createRes.body.id;
+    const res = await request(app).delete(`/api/books/${id}`);
+    expect(res.status).toBe(204);
+  });
+});
