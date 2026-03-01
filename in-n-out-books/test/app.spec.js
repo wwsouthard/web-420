@@ -98,3 +98,39 @@ describe('Chapter 5: API Tests', () => {
     expect(res.body.error).toEqual('Bad Request');
   });
 });
+
+describe('Chapter 6: API Tests', () => {
+  it('should log a user in and return a 200-status with \'Authentication successful\' message', async () => {
+    const res = await request(app)
+      .post('/api/login')
+      .send({ email: 'harry@hogwarts.edu', password: 'potter' })
+      .set('Accept', 'application/json');
+    expect(res.status).toEqual(200);
+    expect(res.body.message).toEqual('Authentication successful');
+  });
+
+  it('should return a 401-status code with \'Unauthorized\' message when logging in with incorrect credentials', async () => {
+    const res = await request(app)
+      .post('/api/login')
+      .send({ email: 'harry@hogwarts.edu', password: 'wrongpassword' })
+      .set('Accept', 'application/json');
+    expect(res.status).toEqual(401);
+    expect(res.body.message).toEqual('Unauthorized');
+  });
+
+  it('should return a 400-status code with \'Bad Request\' when missing email or password', async () => {
+    const resNoEmail = await request(app)
+      .post('/api/login')
+      .send({ password: 'potter' })
+      .set('Accept', 'application/json');
+    expect(resNoEmail.status).toEqual(400);
+    expect(resNoEmail.body.message).toEqual('Bad Request');
+
+    const resNoPassword = await request(app)
+      .post('/api/login')
+      .send({ email: 'harry@hogwarts.edu' })
+      .set('Accept', 'application/json');
+    expect(resNoPassword.status).toEqual(400);
+    expect(resNoPassword.body.message).toEqual('Bad Request');
+  });
+});

@@ -11,7 +11,9 @@
 
 const express = require('express');
 const createError = require('http-errors');
+const bcrypt = require('bcryptjs');
 const books = require('../database/books');
+const users = require('../database/users');
 const app = express();
 
 app.use(express.json());
@@ -200,6 +202,30 @@ app.delete('/api/books/:id', async (req, res, next) => {
       next(createError(404, 'Book not found'));
       return;
     }
+    next(err);
+  }
+});
+
+/**
+ * POST /api/login
+ * Logs a user in. Requires email and password in body.
+ * Returns 200 with 'Authentication successful' on success.
+ * Returns 400 if email or password is missing; 401 if credentials are invalid.
+ */
+app.post('/api/login', async (req, res, next) => {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      res.status(400).json({ message: 'Bad Request' });
+      return;
+    }
+    const [user] = await users.find({ email });
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+    res.status(200).json({ message: 'Authentication successful' });
+  } catch (err) {
     next(err);
   }
 });
