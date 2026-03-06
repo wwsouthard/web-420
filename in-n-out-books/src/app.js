@@ -11,10 +11,27 @@
 
 const express = require('express');
 const createError = require('http-errors');
+const Ajv = require('ajv');
 const bcrypt = require('bcryptjs');
 const books = require('../database/books');
 const users = require('../database/users');
 const app = express();
+
+const ajv = new Ajv({ allErrors: true });
+
+const securityAnswersSchema = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      answer: { type: 'string' },
+    },
+    required: ['answer'],
+    additionalProperties: false,
+  },
+};
+
+const validateSecurityAnswers = ajv.compile(securityAnswersSchema);
 
 app.use(express.json());
 
@@ -225,6 +242,45 @@ app.post('/api/login', async (req, res, next) => {
       return;
     }
     res.status(200).json({ message: 'Authentication successful' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/users/:email/verify-security-question
+ * Verifies a user's security question answers.
+ * Returns 200 with 'Security questions successfully answered' on success.
+ * Returns 400 if request body fails ajv validation; 401 if answers do not match.
+ */
+app.post('/api/users/:email/verify-security-question', async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    const answers = req.body;
+
+    if (!validateSecurityAnswers(answers)) {
+      next(createError(400, 'Bad Request'));
+      return;
+    }
+
+    const [user] = await users.find({ email });
+    if (!user || !user.securityQuestions) {
+      next(createError(401, 'Unauthorized'));
+      return;
+    }
+
+    const savedAnswers = user.securityQuestions.map((sq) => sq.answer);
+    const submittedAnswers = answers.map((a) => a.answer);
+
+    if (
+      savedAnswers.length !== submittedAnswers.length ||
+      !savedAnswers.every((saved, i) => saved === submittedAnswers[i])
+    ) {
+      next(createError(401, 'Unauthorized'));
+      return;
+    }
+
+    res.status(200).json({ message: 'Security questions successfully answered' });
   } catch (err) {
     next(err);
   }
