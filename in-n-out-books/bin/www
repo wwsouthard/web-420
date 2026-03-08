@@ -91,5 +91,5 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
 
-  console.log('Application started and listing on ' + bind)
+  console.log('Application started and listening on ' + bind);
 }

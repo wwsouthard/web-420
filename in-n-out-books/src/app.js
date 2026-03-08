@@ -287,14 +287,6 @@ app.post('/api/users/:email/verify-security-question', async (req, res, next) =>
 });
 
 /**
- * GET /test-error
- * Temporary route to trigger 500 handler for testing. Remove when not needed.
- */
-app.get('/test-error', (req, res, next) => {
-  next(new Error('Intentional 500 for testing'));
-});
-
-/**
  * 404 catch-all handler.
  * Must be registered after all other routes.
  */
